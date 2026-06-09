@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ExpenceManagement">
         <activity
+            android:name=".Home"
+            android:exported="false" />
+        <activity
             android:name=".Register"
             android:exported="false" />
         <activity
