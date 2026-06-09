@@ -8,6 +8,8 @@ android {
         version = release(36) {
             minorApiLevel = 1
         }
+
+        buildFeatures { viewBinding=true }
     }
 
     defaultConfig {
@@ -34,6 +36,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
+
+
 
 dependencies {
     implementation(libs.androidx.activity.ktx)
