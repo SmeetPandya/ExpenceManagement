@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Core Brand Colors -->
+    <color name="brand_primary">#1A365D</color> <!-- Deep Navy Blue -->
+    <color name="brand_primary_dark">#0F2547</color> <!-- Darker Navy for Top Status Bar -->
+
+    <!-- Backgrounds & Surfaces -->
+    <color name="bg_main">#FFFFFF</color> <!-- Crisp White -->
+    <color name="bg_card">#F8F9FA</color> <!-- Pale Gray for Widgets -->
+    <color name="stroke_gray">#E2E8F0</color> <!-- Subtle Gray for Input Borders -->
+
+    <!-- Typography Colors -->
+    <color name="text_primary">#2D3748</color> <!-- Dark Slate for Headings -->
+    <color name="text_secondary">#718096</color> <!-- Light Slate for Hints/Subtitles -->
+
+    <!-- Financial Indicators -->
+    <color name="money_income">#00C853</color> <!-- Mint Green -->
+    <color name="money_expense">#E53935</color> <!-- Crimson Red -->
 </resources>

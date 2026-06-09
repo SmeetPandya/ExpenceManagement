@@ -5,9 +5,7 @@ plugins {
 android {
     namespace = "com.smeet.expencemanagement"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
 
         buildFeatures { viewBinding=true }
     }
@@ -42,6 +40,7 @@ android {
 dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.cardview)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
