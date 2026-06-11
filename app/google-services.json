@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "830706358280",
+    "project_id": "apnahisaab-1c9ce",
+    "storage_bucket": "apnahisaab-1c9ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:830706358280:android:6c190f683bee1bb28a19bd",
+        "android_client_info": {
+          "package_name": "com.smeet.expencemanagement"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "830706358280-ip584k96i3splp8sken9osbivta45ea1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smeet.expencemanagement",
+            "certificate_hash": "6f275ce6076ecac100fd5b9e7b9a80897100d7ba"
+          }
+        },
+        {
+          "client_id": "830706358280-bl7ivcqcdccn19cl30sd8kk8e71m129c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCm3IeXXAabUJ9wgUPSesNqKF2wT1eEAZ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "830706358280-bl7ivcqcdccn19cl30sd8kk8e71m129c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

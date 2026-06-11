@@ -1,13 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.smeet.expencemanagement"
-    compileSdk {
-        version = release(37)
+    compileSdk = 37
 
-        buildFeatures { viewBinding=true }
+    buildFeatures {
+        viewBinding = true
     }
 
     defaultConfig {
@@ -48,4 +49,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }
