@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#4A72B0</color> <color name="brand_primary_dark">#121212</color> <color name="bg_main">#121212</color> <color name="bg_card">#1E1E1E</color> <color name="stroke_gray">#2D3748</color> <color name="text_primary">#F8F9FA</color> <color name="text_secondary">#A0AEC0</color> <color name="money_income">#4ADE80</color> <color name="money_expense">#F87171</color> </resources>
