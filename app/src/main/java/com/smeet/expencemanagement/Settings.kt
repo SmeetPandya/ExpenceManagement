@@ -102,7 +102,14 @@ class Settings : AppCompatActivity() {
 
                     // THE MAGIC TRICK: This kills the slide animation so it looks seamless
                     overridePendingTransition(0, 0)
-                    finish() // Close Settings so they don't stack up
+                    true
+                }
+                R.id.nav_analytics -> {
+                    // 2. FIXED: Change this Intent to open Home::class.java
+                    startActivity(android.content.Intent(applicationContext, Analytics::class.java))
+
+                    // THE MAGIC TRICK: This kills the slide animation so it looks seamless
+                    overridePendingTransition(0, 0)
                     true
                 }
                 else -> false
@@ -137,5 +144,10 @@ class Settings : AppCompatActivity() {
                 finish()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)?.selectedItemId = R.id.nav_settings
     }
 }

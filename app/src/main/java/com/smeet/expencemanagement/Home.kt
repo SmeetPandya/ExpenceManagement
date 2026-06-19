@@ -33,7 +33,6 @@ class Home : AppCompatActivity() {
     private lateinit var viewModel: ExpenseViewModel
 
 
-
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +60,12 @@ class Home : AppCompatActivity() {
                     startActivity(android.content.Intent(applicationContext, Settings::class.java))
                     // THE MAGIC TRICK: This kills the slide animation so it looks seamless
                     overridePendingTransition(0, 0)
-                    finish()// Close Home so they don't stack up
+                    true
+                }
+                R.id.nav_analytics ->{
+                    val intent= Intent(this, Analytics::class.java)
+                    startActivity(intent)
+                    overridePendingTransition(0,0)
                     true
                 }
                 else -> false
@@ -359,5 +363,13 @@ class Home : AppCompatActivity() {
                 totalbudget.text = "/ $selectedCurrency$finalBudget"
             }
             .show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The '?' safely ignores this if the view is missing, preventing crashes!
+        findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)?.selectedItemId = R.id.nav_home
+
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense)?.show()
     }
 }
