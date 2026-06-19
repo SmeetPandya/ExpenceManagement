@@ -25,4 +25,7 @@ interface ExpenseDao {
     @Query("SELECT SUM(amount) FROM expence_table")
     fun getTotalBalance():Flow<Double?>
 
+    @Query("DELETE FROM expence_table")
+    suspend fun deleteAll()
+
 }

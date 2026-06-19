@@ -1,10 +1,13 @@
 package com.smeet.expencemanagement
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -16,28 +19,54 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.dialog.MaterialDialogs
 import com.google.firebase.auth.FirebaseAuth
 import com.smeet.expencemanagement.model.Expence
 import com.smeet.expencemanagement.viewmodel.ExpenseViewModel
 import java.text.Bidi
 
 class Home : AppCompatActivity() {
-    lateinit var auth: FirebaseAuth
+    private lateinit var auth: FirebaseAuth
 
     private lateinit var totalbudget: TextView
     private lateinit var sharedPreference: SharedPreferences
     private lateinit var viewModel: ExpenseViewModel
 
+
+
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         setContentView(R.layout.activity_home)
+
+
 
         // Initialize Room database, repository, and ViewModel
         val database = com.smeet.expencemanagement.model.ExpenseDatabase.getDatabase(this)
         val repository = com.smeet.expencemanagement.repository.ExpenseRepository(database.expenseDao())
         val factory = com.smeet.expencemanagement.viewmodel.ExpenseViewModelFactory(repository)
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory).get(com.smeet.expencemanagement.viewmodel.ExpenseViewModel::class.java)
+
+
+        val bottomnavigationView1=findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
+
+        bottomnavigationView1.selectedItemId=R.id.nav_home
+
+        bottomnavigationView1.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> true // We are already here, do nothing
+
+                R.id.nav_settings -> {
+                    startActivity(android.content.Intent(applicationContext, Settings::class.java))
+                    // THE MAGIC TRICK: This kills the slide animation so it looks seamless
+                    overridePendingTransition(0, 0)
+                    finish()// Close Home so they don't stack up
+                    true
+                }
+                else -> false
+            }
+        }
 
         // Fetch current user's first name from Firebase Authentication
         auth = FirebaseAuth.getInstance()
@@ -63,9 +92,65 @@ class Home : AppCompatActivity() {
             totalbudget.text = "/ $savedCurrency$savedBudget"
         }
 
+        val editButton=findViewById<ImageView>(R.id.editBudgetIcon)
+
+        editButton.setOnClickListener {
+            // 1. Fetch current values
+            val getBudget = sharedPreference.getInt("dailyBudget", 500)
+            val currentCurrency = sharedPreference.getString("currencySymbole", "₹") ?: "₹"
+
+            // 2. Calculate perfect padding (Converts 24dp to exact screen pixels)
+            val paddingPx = (24 * resources.displayMetrics.density).toInt()
+
+            // 3. Create a Container to act as a bumper (fixes the "touching edges" issue)
+            val container = android.widget.FrameLayout(this)
+            container.setPadding(paddingPx, paddingPx / 2, paddingPx, 0)
+
+            // 4. Create the modern "Outlined" Wrapper programmatically
+            val textInputLayout = com.google.android.material.textfield.TextInputLayout(
+                this,
+                null,
+                com.google.android.material.R.attr.textInputOutlinedStyle
+            )
+            textInputLayout.hint = "Daily Budget"
+            textInputLayout.layoutParams = android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+
+            // 5. Create the actual Text Input Box
+            val input = com.google.android.material.textfield.TextInputEditText(textInputLayout.context)
+            input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            input.setText(getBudget.toString())
+
+            // 6. Assemble the pieces (Input goes into Wrapper, Wrapper goes into Container)
+            textInputLayout.addView(input)
+            container.addView(textInputLayout)
+
+            // 7. Show the Dialog
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Edit Daily Budget")
+                .setView(container) // Pass our perfectly padded container here
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save") { dialog, _ ->
+
+                    val typeText = input.text.toString()
+                    val finalBudget = if (typeText.isNotEmpty()) typeText.toInt() else getBudget
+
+                    // Save the new budget
+                    sharedPreference.edit().putInt("dailyBudget", finalBudget).apply()
+
+                    // Update UI
+                    totalbudget.text = "/ $currentCurrency$finalBudget"
+                    Toast.makeText(this, "Budget Updated", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
+
         // Configure the RecyclerView layout manager
         val recyclerView = findViewById<RecyclerView>(R.id.expensesRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
+        var TotalAmount: Double=0.0
 
         // Initialize adapter and handle inline Edit/Delete actions triggered from the UI
         val adapter = ExpenseAdapter(mutableListOf<Expence>(), savedCurrency) { expence, action ->
@@ -85,8 +170,8 @@ class Home : AppCompatActivity() {
                 val dialogButton = bottomsheetView.findViewById<Button>(R.id.btnSaveExpense)
                 val dropdown = bottomsheetView.findViewById<Spinner>(R.id.spinnerCategory)
 
-                val category = arrayOf("Food", "Transport", "Shopping", "Bills", "Other")
-                val spinnerAdapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, category)
+                val category = arrayOf("Food and Dining", "Transportation","Housing and Utilities","Shopping","Health & Fitness","Entertainment & Leisure","Personal Care","Education","Finance & Debt","Other")
+                val spinnerAdapter = android.widget.ArrayAdapter(this@Home, android.R.layout.simple_spinner_dropdown_item, category)
                 dropdown.adapter = spinnerAdapter
 
                 // Pre-fill the form with the selected expense's details
@@ -106,11 +191,34 @@ class Home : AppCompatActivity() {
                     } else {
                         // Package the modified values and update the database record
                         val amountDouble = amountText.toDouble()
-                        val updatedExpense = expence.copy(amount = amountDouble, category = categoryValue, note = nameText)
-                        viewModel.update(updatedExpense)
 
-                        Toast.makeText(this, "Expense Updated.", Toast.LENGTH_SHORT).show()
-                        bottomsheetDialog.dismiss()
+                        val currentBudget=sharedPreference.getInt("dailyBudget",500)
+                        val projectTotal=TotalAmount+amountDouble
+
+                        if(projectTotal>currentBudget){
+                            MaterialAlertDialogBuilder(this)
+                                .setTitle("Over Budget Warning!")
+                                .setMessage("This expense will put you over your daily limit.")
+                                .setCancelable(false)
+                                .setNegativeButton("Cancel") { dialog, _->
+                                    dialog.dismiss()
+                                }
+                                .setPositiveButton("Yes,Save") {dialog ,_->
+                                    val updatedExpense = expence.copy(amount = amountDouble, category = categoryValue, note = nameText)
+                                    viewModel.update(updatedExpense)
+
+                                    Toast.makeText(this, "Expense Updated.", Toast.LENGTH_SHORT).show()
+                                    bottomsheetDialog.dismiss()
+                                }
+                                .show()
+                        }
+                        else{
+                            val updatedExpense = expence.copy(amount = amountDouble, category = categoryValue, note = nameText)
+                            viewModel.update(updatedExpense)
+
+                            Toast.makeText(this, "Expense Updated.", Toast.LENGTH_SHORT).show()
+                            bottomsheetDialog.dismiss()
+                        }
                     }
                 }
             }
@@ -119,9 +227,27 @@ class Home : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         // Observe the LiveData list so the UI updates automatically on any database changes
+
+        val emptyState=findViewById<TextView>(R.id.emptyStateText)
+        val amountWidget=findViewById<TextView>(R.id.usedBudgetText)
+
+
         viewModel.allExpenses.asLiveData().observe(this) { expenceList ->
             adapter.updateData(expenceList)
+
+            TotalAmount=expenceList.sumOf { it.amount }
+            amountWidget.text=TotalAmount.toString()
+
+            if(expenceList.isEmpty()){
+                emptyState.visibility=android.view.View.VISIBLE
+                recyclerView.visibility=android.view.View.GONE
+            }
+            else{
+                emptyState.visibility=android.view.View.GONE
+                recyclerView.visibility=android.view.View.VISIBLE
+            }
         }
+
 
         // Handle the Floating Action Button click to add a new expense
         val addButton = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense)
@@ -138,7 +264,7 @@ class Home : AppCompatActivity() {
             val dialogButton = bottomSheetView.findViewById<Button>(R.id.btnSaveExpense)
             val dropdown = bottomSheetView.findViewById<Spinner>(R.id.spinnerCategory)
 
-            val category = arrayOf("Food", "Transport", "Shopping", "Bills", "Other")
+            val category = arrayOf("Food and Dining", "Transportation", "Housing and Utilities", "Shopping", "Health & Fitness", "Entertainment & Leisure", "Personal Care", "Education", "Finance & Debt", "Other")
             val spinnerAdapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, category)
             dropdown.adapter = spinnerAdapter
 
@@ -154,11 +280,31 @@ class Home : AppCompatActivity() {
                 } else {
                     // Create a brand new expense object and insert it into the database
                     val amountDouble = amountText.toDouble()
-                    val newExpence = Expence(amount = amountDouble, category = categoryValue, note = nameText)
-                    viewModel.insert(newExpence)
+                    val currentBudget=sharedPreference.getInt("dailyBudget",500)
+                    val projectTotal=TotalAmount+amountDouble
 
-                    Toast.makeText(this@Home, "Expense Saved.", Toast.LENGTH_SHORT).show()
-                    bottomSheetDialog.dismiss()
+                    if(projectTotal>currentBudget){
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle("Over Budget Warning!")
+                            .setMessage("This expense will put you over your daily limit.")
+                            .setCancelable(false)
+                            .setNegativeButton("Cancel") { dialog, _->
+                                dialog.dismiss()
+                            }
+                            .setPositiveButton("Yes,Save") {dialog ,_->
+                                val newExpence = Expence(amount = amountDouble, category = categoryValue, note = nameText)
+                                viewModel.insert(newExpence)
+                                Toast.makeText(this@Home, "Expense Saved.", Toast.LENGTH_SHORT).show()
+                                bottomSheetDialog.dismiss()
+                            }
+                            .show()
+                    }
+                    else{
+                        val newExpence = Expence(amount = amountDouble, category = categoryValue, note = nameText)
+                        viewModel.insert(newExpence)
+                        Toast.makeText(this@Home, "Expense Saved.", Toast.LENGTH_SHORT).show()
+                        bottomSheetDialog.dismiss()
+                    }
                 }
             }
         }

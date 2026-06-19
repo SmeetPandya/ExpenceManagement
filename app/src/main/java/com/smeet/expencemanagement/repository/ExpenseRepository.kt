@@ -2,6 +2,7 @@ package com.smeet.expencemanagement.repository
 
 import com.smeet.expencemanagement.model.Expence
 import com.smeet.expencemanagement.model.ExpenseDao
+import kotlin.math.exp
 
 class ExpenseRepository(private val expenseDao: ExpenseDao) {
 
@@ -19,5 +20,9 @@ class ExpenseRepository(private val expenseDao: ExpenseDao) {
 
     suspend fun edit(expence: Expence){
         expenseDao.updateExpence(expence)
+    }
+
+    suspend fun deleteAllExpence(){
+        expenseDao.deleteAll()
     }
 }

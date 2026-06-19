@@ -18,6 +18,22 @@ class Register : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
 
+    private lateinit var googleSignInClient: com.google.android.gms.auth.api.signin.GoogleSignInClient
+
+    private val googleLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Google Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -32,6 +48,22 @@ class Register : AppCompatActivity() {
         val registerButton=findViewById<Button>(R.id.btnRegister)
         val loginbutton=findViewById<TextView>(R.id.loginRedirectText)
 
+
+        // 1. Setup the Google Sign-In Options
+        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(this, gso)
+
+        // 2. Hook up the Google Button
+        val googleButton = findViewById<Button>(R.id.googleRegisterButton) // Make sure this ID matches your Register XML!
+
+        googleButton.setOnClickListener {
+            val signinIntent = googleSignInClient.signInIntent
+            googleLauncher.launch(signinIntent)
+        }
 
         registerButton.setOnClickListener{
             val name=nameInput.text.toString().trim()
@@ -85,6 +117,25 @@ class Register : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+    }
+
+    private fun firebaseAuthWithGoogle(idToken: String) {
+        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+
+        auth.signInWithCredential(credential).addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                // Changed the toast to reflect Registration
+                Toast.makeText(this, "Google Registration Successful!", Toast.LENGTH_SHORT).show()
+
+                // Changed the Intent to use this@Register
+                val intent = Intent(this@Register, Home::class.java)
+                startActivity(intent)
+
+                finish()
+            } else {
+                Toast.makeText(this, "Firebase Auth Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

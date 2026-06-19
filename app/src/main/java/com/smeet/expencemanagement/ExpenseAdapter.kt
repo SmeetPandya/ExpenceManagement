@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.smeet.expencemanagement.model.Expence
 
-// EXACT MATCH: (List, String, Action)
 class ExpenseAdapter(
     private var expenseList: MutableList<Expence>,
     private val currencySymbole: String,

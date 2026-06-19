@@ -1,6 +1,8 @@
 package com.smeet.expencemanagement
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -17,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuth
 class login : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+
 
     private lateinit var googleSignnClient:com.google.android.gms.auth.api.signin.GoogleSignInClient
 
