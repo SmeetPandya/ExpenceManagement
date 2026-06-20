@@ -2,13 +2,20 @@ package com.smeet.expencemanagement
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.PieChart
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.smeet.expencemanagement.model.Expence
 import com.smeet.expencemanagement.model.ExpenseDatabase
 import com.smeet.expencemanagement.repository.ExpenseRepository
 import com.smeet.expencemanagement.viewmodel.ExpenseViewModel
@@ -33,10 +40,25 @@ class Analytics : AppCompatActivity() {
         viewModel = ViewModelProvider(this, factory).get(ExpenseViewModel::class.java)
 
         val dateRangeButton = findViewById<ImageButton>(R.id.btnDateRange)
-        val barChart = findViewById<com.github.mikephil.charting.charts.BarChart>(R.id.BarChart)
-        val pieChart = findViewById<com.github.mikephil.charting.charts.PieChart>(R.id.PieChart)
+        val barChart = findViewById<BarChart>(R.id.BarChart)
         val dropdown = findViewById<AutoCompleteTextView>(R.id.dropdownPieFilter)
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
+
+        val pieOption=arrayOf("This Week" , "This Month", "This Year" , "Overall")
+
+        val dropdownAdapter= ArrayAdapter(this,android.R.layout.simple_dropdown_item_1line,pieOption)
+        dropdown.setAdapter(dropdownAdapter)
+
+        dropdown.setText("This Month",false)
+
+        dropdown.setOnItemClickListener { parent, _, position, _ ->
+            val selectedFilter=parent.getItemAtPosition(position).toString()
+
+            val filteredList=filterExpensesForPieChart(selectedFilter,myExpenses)
+
+            updatePieChart(filteredList)
+        }
+
 
         bottomNavigationView.selectedItemId = R.id.nav_analytics
         bottomNavigationView.setOnItemSelectedListener { item ->
@@ -59,19 +81,23 @@ class Analytics : AppCompatActivity() {
             }
         }
 
-        barChart.setNoDataText("No expenses for these dates \uD83D\uDCB8")
-        val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
-        barChart.setNoDataTextColor(if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK)
+        barChart.setNoDataText("No expenses for these dates ")
+        val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        barChart.setNoDataTextColor(if (isDarkMode) Color.WHITE else Color.BLACK)
 
         viewModel.allExpenses.asLiveData().observe(this) { expenses ->
             if (expenses != null) {
                 myExpenses = expenses
                 updateBarChart(myExpenses)
+
+                val initialFilter = dropdown.text.toString()
+                val filteredList = filterExpensesForPieChart(initialFilter, myExpenses)
+                updatePieChart(filteredList)
             }
         }
 
         dateRangeButton.setOnClickListener {
-            val builder = com.google.android.material.datepicker.MaterialDatePicker.Builder.dateRangePicker()
+            val builder = MaterialDatePicker.Builder.dateRangePicker()
             builder.setTitleText("Select Dates")
             builder.setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
 
@@ -91,12 +117,119 @@ class Analytics : AppCompatActivity() {
         findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)?.selectedItemId = R.id.nav_analytics
     }
 
+    private fun filterExpensesForPieChart(filterType: String,allExpence: List<com.smeet.expencemanagement.model.Expence>):List<com.smeet.expencemanagement.model.Expence>{
+        val calendar=java.util.Calendar.getInstance()
+        val currentTime=calendar.timeInMillis
+
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+
+        val startTime=when(filterType){
+            "This Week" ->{
+                calendar.set(java.util.Calendar.DAY_OF_WEEK,calendar.firstDayOfWeek)
+                calendar.timeInMillis
+            }
+            "This Month" ->{
+                calendar.set(java.util.Calendar.DAY_OF_MONTH,1)
+                calendar.timeInMillis
+            }
+            "This Year" ->{
+                calendar.set(java.util.Calendar.DAY_OF_YEAR,1)
+                calendar.timeInMillis
+            }
+            "Overall" ->{
+                return allExpence
+            }
+            else -> 0L
+        }
+
+        return allExpence.filter { it.date in startTime..currentTime }
+    }
+
+    private fun updatePieChart(filteredExpence: List<com.smeet.expencemanagement.model.Expence>){
+        val categoryPiles=filteredExpence.groupBy { it.category }
+
+        val categoryTotal=categoryPiles.mapValues { pile->
+            pile.value.sumOf { it.amount.toDouble() }
+        }
+
+        val pieChart = findViewById<com.github.mikephil.charting.charts.PieChart>(R.id.PieChart)
+        val sharedPreferences = getSharedPreferences("ExpensePref", MODE_PRIVATE)
+        val saveCurrency = sharedPreferences.getString("currencySymbole", "₹") ?: "₹"
+
+        val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val textColor = if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+
+        pieChart.setNoDataText("No Data Found")
+        pieChart.setNoDataTextColor(textColor)
+
+        val entries= ArrayList<com.github.mikephil.charting.data.PieEntry>()
+        for((categoryName,total) in categoryTotal){
+            if(total>0){
+                entries.add(com.github.mikephil.charting.data.PieEntry(total.toFloat(),categoryName))
+            }
+        }
+
+        if(entries.isEmpty()){
+            pieChart.clear()
+            return
+        }
+
+        val dataSet=com.github.mikephil.charting.data.PieDataSet(entries,"")
+
+        val colors = ArrayList<Int>()
+        colors.addAll(com.github.mikephil.charting.utils.ColorTemplate.MATERIAL_COLORS.toList())
+        colors.addAll(com.github.mikephil.charting.utils.ColorTemplate.PASTEL_COLORS.toList())
+        dataSet.colors = colors
+
+        dataSet.setDrawValues(true)
+        dataSet.valueTextSize = 10f
+
+        dataSet.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
+            override fun getPieLabel(value: Float, pieEntry: com.github.mikephil.charting.data.PieEntry?): String {
+                return if (value % 1 == 0f) "$saveCurrency${value.toInt()}" else "$saveCurrency$value"
+            }
+        }
+
+        pieChart.data = com.github.mikephil.charting.data.PieData(dataSet)
+
+        pieChart.description.isEnabled = false
+        pieChart.legend.isEnabled = true
+        pieChart.legend.textColor = textColor
+        pieChart.legend.isWordWrapEnabled = true
+        pieChart.legend.horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
+        pieChart.legend.verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.BOTTOM
+        pieChart.legend.orientation = com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL
+        pieChart.legend.yEntrySpace = 8f
+        pieChart.setExtraOffsets(0f, 0f, 0f, 5f)
+        pieChart.isDrawHoleEnabled = true
+        pieChart.holeRadius = 38f
+        pieChart.transparentCircleRadius = 55f
+        pieChart.setHoleColor(android.graphics.Color.TRANSPARENT)
+
+        val totalSpent = categoryTotal.values.sum()
+        val formattedTotal = if (totalSpent % 1 == 0.0) "${totalSpent.toInt()}" else "$totalSpent"
+        pieChart.centerText = "Total Spent\n$saveCurrency$formattedTotal"
+        pieChart.setCenterTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary))
+        pieChart.setCenterTextSize(10f)
+
+        pieChart.setDrawEntryLabels(false)
+
+        pieChart.notifyDataSetChanged()
+
+        pieChart.animateY(1000)
+        pieChart.invalidate()
+    }
+
     @android.annotation.SuppressLint("UseKtx")
     private fun updateBarChart(expenses: List<com.smeet.expencemanagement.model.Expence>) {
         val barChart = findViewById<com.github.mikephil.charting.charts.BarChart>(R.id.BarChart)
 
         val sharedPreferences = getSharedPreferences("ExpensePref", MODE_PRIVATE)
         val dailyBudgetLimit = sharedPreferences.getInt("dailyBudget", 500).toFloat()
+        val saveCurrency=sharedPreferences.getString("currencySymbole","₹")?:"₹"
 
         val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         val textColor = if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK
@@ -146,14 +279,14 @@ class Analytics : AppCompatActivity() {
 
         val dataSet = com.github.mikephil.charting.data.BarDataSet(entries, "")
         dataSet.colors = barColors
-        dataSet.valueTextSize = 12f
+        dataSet.valueTextSize = 10f
         dataSet.valueTextColor = textColor
         dataSet.valueTypeface = cleanFont
 
         dataSet.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
             override fun getBarLabel(barEntry: com.github.mikephil.charting.data.BarEntry?): String {
                 val value = barEntry?.y ?: 0f
-                return if (value % 1 == 0f) "₹${value.toInt()}" else "₹$value"
+                return if (value % 1 == 0f) "$saveCurrency${value.toInt()}" else "$saveCurrency$value"
             }
         }
 

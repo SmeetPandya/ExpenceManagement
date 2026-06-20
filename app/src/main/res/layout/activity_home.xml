@@ -81,8 +81,11 @@
                 android:id="@+id/editBudgetIcon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@drawable/ic_edit"
                 app:tint="@color/brand_primary"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -125,19 +128,42 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- 3. RECENT EXPENSES TITLE -->
-    <TextView
-        android:id="@+id/recentTitle"
+    <!-- 3. RECENT EXPENSES TITLE & FILTER BUTTON -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/recentHeaderLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginTop="16dp"
-        android:text="Recent Expenses"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/budgetCardLayout" />
+        app:layout_constraintTop_toBottomOf="@id/budgetCardLayout">
+
+        <TextView
+            android:id="@+id/recentTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Today's Expenses"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnFilterDate"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- Added Calendar/Filter Button here! -->
+        <ImageButton
+            android:id="@+id/btnFilterDate"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_filter_list"
+            app:tint="@color/brand_primary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 4. RECYCLER VIEW -->
     <androidx.recyclerview.widget.RecyclerView
@@ -149,8 +175,8 @@
         android:layout_marginEnd="16dp"
         android:paddingBottom="100dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/recentTitle"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView" />
+        app:layout_constraintTop_toBottomOf="@id/recentHeaderLayout"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView" /> <!-- Re-linked to recentHeaderLayout -->
 
     <!-- 5. EMPTY STATE -->
     <TextView

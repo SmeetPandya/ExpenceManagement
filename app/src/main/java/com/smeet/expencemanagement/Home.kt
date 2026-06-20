@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.media.Image
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -31,6 +32,15 @@ class Home : AppCompatActivity() {
     private lateinit var totalbudget: TextView
     private lateinit var sharedPreference: SharedPreferences
     private lateinit var viewModel: ExpenseViewModel
+
+    private var currentlyViewingDate: Long = System.currentTimeMillis()
+    private var allMyExpenses: List<Expence> = emptyList()
+
+    private lateinit var emptyState: TextView
+    private lateinit var amountWidget: TextView
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: ExpenseAdapter
+    private var TotalAmount: Double = 0.0
 
 
     @SuppressLint("MissingInflatedId")
@@ -152,12 +162,11 @@ class Home : AppCompatActivity() {
         }
 
         // Configure the RecyclerView layout manager
-        val recyclerView = findViewById<RecyclerView>(R.id.expensesRecyclerView)
+        recyclerView = findViewById<RecyclerView>(R.id.expensesRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        var TotalAmount: Double=0.0
 
         // Initialize adapter and handle inline Edit/Delete actions triggered from the UI
-        val adapter = ExpenseAdapter(mutableListOf<Expence>(), savedCurrency) { expence, action ->
+        adapter = ExpenseAdapter(mutableListOf<Expence>(), savedCurrency) { expence, action ->
             if (action == "DELETE") {
                 // Remove the selected expense from the database
                 viewModel.delete(expence)
@@ -232,24 +241,33 @@ class Home : AppCompatActivity() {
 
         // Observe the LiveData list so the UI updates automatically on any database changes
 
-        val emptyState=findViewById<TextView>(R.id.emptyStateText)
-        val amountWidget=findViewById<TextView>(R.id.usedBudgetText)
+        emptyState=findViewById<TextView>(R.id.emptyStateText)
+        amountWidget=findViewById<TextView>(R.id.usedBudgetText)
+
+        val filterButton=findViewById<ImageView>(R.id.btnFilterDate)
+
+        filterButton.setOnClickListener {
+            val builder = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
+            builder.setTitleText("Select a Day")
+            builder.setSelection(currentlyViewingDate)
+
+            val picker = builder.build()
+
+            picker.addOnPositiveButtonClickListener { selection ->
+                currentlyViewingDate = selection
+                refreshListAndBudget()
+            }
+
+            picker.show(supportFragmentManager, "DATE_PICKER")
+        }
 
 
         viewModel.allExpenses.asLiveData().observe(this) { expenceList ->
-            adapter.updateData(expenceList)
 
-            TotalAmount=expenceList.sumOf { it.amount }
-            amountWidget.text=TotalAmount.toString()
+            // 1. Calculate the exact milliseconds when "Today" starts and ends
+            allMyExpenses = expenceList // Save the master list so the filter button can use it later!
 
-            if(expenceList.isEmpty()){
-                emptyState.visibility=android.view.View.VISIBLE
-                recyclerView.visibility=android.view.View.GONE
-            }
-            else{
-                emptyState.visibility=android.view.View.GONE
-                recyclerView.visibility=android.view.View.VISIBLE
-            }
+            refreshListAndBudget()
         }
 
 
@@ -312,6 +330,79 @@ class Home : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun refreshListAndBudget(){
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = currentlyViewingDate // Force the calendar to use our selected date!
+
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        val startOfDay = calendar.timeInMillis
+
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        calendar.set(java.util.Calendar.MINUTE, 59)
+        calendar.set(java.util.Calendar.SECOND, 59)
+        val endOfDay = calendar.timeInMillis
+
+        // 2. The Filter: Create a new mini-list containing ONLY today's expenses
+        val todaysExpenses = allMyExpenses.filter { expence ->
+            expence.date in startOfDay..endOfDay
+        }
+
+        // 3. Update the UI and Math using ONLY the mini-list (todaysExpenses)
+        adapter.updateData(todaysExpenses)
+
+        TotalAmount = todaysExpenses.sumOf { it.amount }
+        amountWidget.text = TotalAmount.toString()
+
+        val recentTitle = findViewById<TextView>(R.id.recentTitle)
+
+        // 2. SMART TITLE LOGIC: Check if the currently viewed date is actually "Today"
+        if (android.text.format.DateUtils.isToday(currentlyViewingDate)) {
+            // If it is today, show the normal title
+            recentTitle.text = "Today's Expenses"
+        } else {
+            // If it is NOT today, format the date (e.g., "18 Jun 2026") and show that!
+            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            val formattedDate = sdf.format(java.util.Date(currentlyViewingDate))
+            recentTitle.text = "Expenses on $formattedDate"
+        }
+
+        if(todaysExpenses.isEmpty()){
+            emptyState.text = "No expenses."
+            emptyState.visibility=android.view.View.VISIBLE
+            recyclerView.visibility=android.view.View.GONE
+        }
+        else{
+            emptyState.visibility=android.view.View.GONE
+            recyclerView.visibility=android.view.View.VISIBLE
+        }
+
+        // 1. Find the Progress Bar
+        val budgetProgressBar = findViewById<com.google.android.material.progressindicator.LinearProgressIndicator>(R.id.budgetProgressBar)
+
+        // 2. Get the user's set limit
+        val currentBudget = sharedPreference.getInt("dailyBudget", 500)
+
+        // 3. Calculate the percentage
+        val progressPercentage = ((TotalAmount / currentBudget) * 100).toInt()
+
+        // 4. Prevent the bar from crashing if they go over 100%
+        val safeProgress = if (progressPercentage > 100) 100 else progressPercentage
+
+        // 5. COLOR SHIFT LOGIC: Check if they went over budget!
+        if (TotalAmount > currentBudget) {
+            // Turn it Red (using the money_expense color from your colors.xml)
+            budgetProgressBar.setIndicatorColor(getColor(R.color.money_expense))
+        } else {
+            // Keep it Blue (using your normal brand_primary color)
+            budgetProgressBar.setIndicatorColor(getColor(R.color.brand_primary))
+        }
+
+        // 6. Animate the bar!
+        budgetProgressBar.setProgressCompat(safeProgress, true)
     }
 
     // Show a configuration dialog for first-time users to set currency and budget limits

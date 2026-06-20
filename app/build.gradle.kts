@@ -69,4 +69,5 @@ dependencies {
     kapt(libs.androidx.room.compiler)
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.2")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

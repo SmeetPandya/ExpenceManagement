@@ -21,6 +21,7 @@ class ExpenseAdapter(
 
     override fun onBindViewHolder(holder: ExpenseViewHolder, position: Int) {
         val currentExpense = expenseList[position]
+        holder.category.text = currentExpense.category
         holder.name.text = currentExpense.note
         holder.amount.text = "- $currencySymbole${currentExpense.amount}"
         val formatter = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
@@ -53,6 +54,7 @@ class ExpenseAdapter(
     }
 
     inner class ExpenseViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+        val category = itemView.findViewById<TextView>(R.id.expenseCategory)
         val name = itemView.findViewById<TextView>(R.id.expenseName)
         val date = itemView.findViewById<TextView>(R.id.expenseDate)
         val amount = itemView.findViewById<TextView>(R.id.expenseAmount)
@@ -60,7 +62,7 @@ class ExpenseAdapter(
     }
 
     fun updateData(newList: List<Expence>) {
-        expenseList = newList.toMutableList() // Safely copy the list to avoid crashes
+        expenseList = newList.toMutableList()
         notifyDataSetChanged()
     }
 }
