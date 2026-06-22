@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="6dp"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
@@ -30,14 +32,37 @@
             app:srcCompat="@android:drawable/ic_menu_today"
             app:tint="@color/brand_primary"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iconMoreOptions"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:contentDescription="More Options"
+            app:srcCompat="@drawable/ic_custom_dots"
+            app:tint="@color/text_secondary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/billAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="₹649"
+            android:textColor="@color/money_expense"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/iconMoreOptions"
+            app:layout_constraintTop_toTopOf="@id/iconMoreOptions"
+            app:layout_constraintBottom_toBottomOf="@id/iconMoreOptions" />
 
         <TextView
             android:id="@+id/billCategory"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_marginEnd="8dp"
             tools:text="Entertainment &amp; Leisure"
             android:textColor="@color/text_primary"
@@ -48,7 +73,7 @@
             android:ellipsize="end"
             app:layout_constraintStart_toEndOf="@id/billIcon"
             app:layout_constraintTop_toTopOf="@id/billIcon"
-            app:layout_constraintEnd_toStartOf="@+id/btnOptions" />
+            app:layout_constraintEnd_toStartOf="@id/billAmount" />
 
         <TextView
             android:id="@+id/billName"
@@ -64,6 +89,20 @@
             app:layout_constraintEnd_toEndOf="@id/billCategory"
             app:layout_constraintTop_toBottomOf="@id/billCategory" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMarkPaid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Pay"
+            android:textSize="12sp"
+            app:cornerRadius="8dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/iconMoreOptions"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/statusPillLayout"
             android:layout_width="wrap_content"
@@ -72,9 +111,9 @@
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp"
-            android:layout_marginTop="6dp"
             app:layout_constraintStart_toStartOf="@id/billCategory"
-            app:layout_constraintTop_toBottomOf="@id/billName">
+            app:layout_constraintTop_toTopOf="@id/btnMarkPaid"
+            app:layout_constraintBottom_toBottomOf="@id/btnMarkPaid">
 
             <TextView
                 android:id="@+id/billStatusBadge"
@@ -87,44 +126,6 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:id="@+id/billAmount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="₹649"
-            android:textColor="@color/money_expense"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginStart="8dp"
-            app:layout_constraintStart_toEndOf="@id/statusPillLayout"
-            app:layout_constraintBottom_toBottomOf="@id/statusPillLayout"
-            app:layout_constraintTop_toTopOf="@id/statusPillLayout" />
-
-        <ImageView
-            android:id="@+id/btnOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:paddingStart="8dp"
-            android:contentDescription="Options Menu"
-            app:srcCompat="@android:drawable/ic_menu_moreoverflow"
-            app:tint="@color/text_secondary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnMarkPaid"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pay"
-            android:textSize="12sp"
-            app:cornerRadius="8dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnOptions" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

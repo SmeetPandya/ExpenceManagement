@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
@@ -31,8 +32,7 @@
             app:srcCompat="@drawable/ic_analytics"
             app:tint="@color/brand_primary"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/iconMoreOptions"
@@ -44,8 +44,7 @@
             app:srcCompat="@drawable/ic_custom_dots"
             app:tint="@color/text_secondary"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/expenseAmount"
@@ -56,18 +55,16 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium"
-            android:layout_marginEnd="12dp"
-            app:layout_constraintEnd_toStartOf="@+id/iconMoreOptions"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintEnd_toStartOf="@id/iconMoreOptions"
+            app:layout_constraintTop_toTopOf="@id/iconMoreOptions"
+            app:layout_constraintBottom_toBottomOf="@id/iconMoreOptions" />
 
-        <!-- 1. The new BIG Category text on top -->
         <TextView
             android:id="@+id/expenseCategory"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:text="Food &amp; Dining"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
@@ -75,43 +72,39 @@
             android:fontFamily="sans-serif"
             android:maxLines="1"
             android:ellipsize="end"
-            app:layout_constraintBottom_toTopOf="@+id/expenseName"
-            app:layout_constraintStart_toEndOf="@+id/expenseIcon"
-            app:layout_constraintEnd_toStartOf="@+id/expenseAmount"
-            app:layout_constraintTop_toTopOf="@+id/expenseIcon"
-            app:layout_constraintVertical_chainStyle="packed" />
+            app:layout_constraintStart_toEndOf="@id/expenseIcon"
+            app:layout_constraintTop_toTopOf="@id/expenseIcon"
+            app:layout_constraintEnd_toStartOf="@id/expenseAmount" />
 
-        <!-- 2. The specific note/name tucked into the middle -->
         <TextView
             android:id="@+id/expenseName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Swiggy Order"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
             android:ellipsize="end"
-            app:layout_constraintBottom_toTopOf="@+id/expenseDate"
-            app:layout_constraintStart_toStartOf="@+id/expenseCategory"
-            app:layout_constraintEnd_toEndOf="@+id/expenseCategory"
-            app:layout_constraintTop_toBottomOf="@+id/expenseCategory" />
+            app:layout_constraintStart_toStartOf="@id/expenseCategory"
+            app:layout_constraintEnd_toEndOf="@id/expenseCategory"
+            app:layout_constraintTop_toBottomOf="@id/expenseCategory" />
 
-        <!-- 3. The date kept nicely at the bottom -->
         <TextView
             android:id="@+id/expenseDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="14 Mar 2026"
             android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:fontFamily="sans-serif"
             android:maxLines="1"
             android:ellipsize="end"
-            app:layout_constraintBottom_toBottomOf="@+id/expenseIcon"
-            app:layout_constraintStart_toStartOf="@+id/expenseCategory"
-            app:layout_constraintEnd_toEndOf="@+id/expenseCategory"
-            app:layout_constraintTop_toBottomOf="@+id/expenseName" />
+            app:layout_constraintStart_toStartOf="@id/expenseCategory"
+            app:layout_constraintEnd_toEndOf="@id/expenseCategory"
+            app:layout_constraintTop_toBottomOf="@id/expenseName"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

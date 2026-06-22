@@ -14,10 +14,12 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class ScheduledBillAdapter(
-    private var billsList: MutableList<ScheduledBill>,
-    private val currencySymbole: String,
-    private val onMarkAsPaid:(ScheduledBill) -> Unit
-): RecyclerView.Adapter<ScheduledBillAdapter.BillViewHolder>() {
+    private var billList: List<com.smeet.expencemanagement.model.ScheduledBill>,
+    private val currencySymbol: String,
+    private val onMarkAsPaid: (com.smeet.expencemanagement.model.ScheduledBill) -> Unit,
+    private val onEditClick: (com.smeet.expencemanagement.model.ScheduledBill) -> Unit,
+    private val onDeleteClick: (com.smeet.expencemanagement.model.ScheduledBill) -> Unit
+) : androidx.recyclerview.widget.RecyclerView.Adapter<ScheduledBillAdapter.BillViewHolder>()  {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -30,7 +32,7 @@ class ScheduledBillAdapter(
         holder: BillViewHolder,
         position: Int
     ) {
-        val currentBill=billsList[position]
+        val currentBill=billList[position]
 
         holder.category.text=currentBill.category
         holder.name.text=currentBill.billName
@@ -41,7 +43,7 @@ class ScheduledBillAdapter(
         else{
             currentBill.amount.toString()
         }
-        holder.amount.text="$currencySymbole$formateAmount"
+        holder.amount.text="$currencySymbol$formateAmount"
 
         val today= System.currentTimeMillis()
 
@@ -76,12 +78,34 @@ class ScheduledBillAdapter(
                 onMarkAsPaid(currentBill)
             }
         }
+
+        holder.iconMoreOptions.setOnClickListener { view ->
+            val popup=android.widget.PopupMenu(view.context,holder.iconMoreOptions)
+
+            popup.menu.add("Edit")
+            popup.menu.add("Delete")
+
+            popup.setOnMenuItemClickListener { menuItem ->
+                when(menuItem.title){
+                    "Edit"->{
+                        onEditClick(currentBill)
+                        true
+                    }
+                    "Delete"->{
+                        onDeleteClick(currentBill)
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
+        }
     }
 
-    override fun getItemCount(): Int =billsList.size
+    override fun getItemCount(): Int =billList.size
 
     fun updateData(newList: List<ScheduledBill>){
-        billsList=newList.toMutableList()
+        billList=newList.toMutableList()
         notifyDataSetChanged()
     }
 
@@ -91,5 +115,6 @@ class ScheduledBillAdapter(
         val amount: TextView = itemView.findViewById(R.id.billAmount)
         val statusBadge: TextView = itemView.findViewById(R.id.billStatusBadge)
         val btnMarkPaid: android.widget.Button = itemView.findViewById(R.id.btnMarkPaid)
+        val iconMoreOptions: android.widget.ImageView = itemView.findViewById(R.id.iconMoreOptions)
     }
 }

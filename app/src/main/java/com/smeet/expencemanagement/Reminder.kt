@@ -41,20 +41,31 @@ class Reminder : AppCompatActivity() {
         val recyclerView=findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.billsRecyclerView)
         recyclerView.layoutManager=androidx.recyclerview.widget.LinearLayoutManager(this)
 
-        val adapter= ScheduledBillAdapter(mutableListOf(),currencySymbol){paidBill ->
-            val newExpense = com.smeet.expencemanagement.model.Expence(
-                amount = paidBill.amount,
-                category = paidBill.category,
-                note = paidBill.billName + " (Scheduled)",
-                date = System.currentTimeMillis()
-            )
-            viewModel.insert(newExpense)
+        val adapter = ScheduledBillAdapter(
+            billList = mutableListOf(),
+            currencySymbol = currencySymbol,
+            onMarkAsPaid = { paidBill ->
+                val newExpense = com.smeet.expencemanagement.model.Expence(
+                    amount = paidBill.amount,
+                    category = paidBill.category,
+                    note = paidBill.billName + " (Scheduled)",
+                    date = System.currentTimeMillis()
+                )
+                viewModel.insert(newExpense)
 
-            val updatedBill = paidBill.copy(isPaid = true)
-            viewModel.updateScheduledBill(updatedBill)
+                val updatedBill = paidBill.copy(isPaid = true)
+                viewModel.updateScheduledBill(updatedBill)
 
-            android.widget.Toast.makeText(this, "${paidBill.billName} marked as paid!", android.widget.Toast.LENGTH_SHORT).show()
-        }
+                android.widget.Toast.makeText(this, "${paidBill.billName} marked as paid!", android.widget.Toast.LENGTH_SHORT).show()
+            },
+            onEditClick = { billToEdit ->
+                showAddBillBottomSheet(billToEdit)
+            },
+            onDeleteClick = { billToDelete ->
+                viewModel.deleteScheduleBills(billToDelete)
+                android.widget.Toast.makeText(this, "Bill deleted", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
 
         recyclerView.adapter=adapter
 
@@ -119,7 +130,7 @@ class Reminder : AppCompatActivity() {
         }
     }
 
-    private fun showAddBillBottomSheet(){
+    private fun showAddBillBottomSheet(billToEdit: ScheduledBill?=null){
         val bottomSheetDialog= BottomSheetDialog(this)
 
         val view=layoutInflater.inflate(R.layout.bottom_sheet_add_scheduled_bill,null)
@@ -154,6 +165,28 @@ class Reminder : AppCompatActivity() {
         val categories=arrayOf("Food and Dining", "Transportation","Housing and Utilities","Shopping","Health & Fitness","Entertainment & Leisure","Personal Care","Education","Finance & Debt","Other")
         spinerCategory.adapter=android.widget.ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,categories)
 
+        if(billToEdit!=null){
+            inputName.setText(billToEdit.billName)
+            val formattedAmount = if (billToEdit.amount % 1 == 0.0) billToEdit.amount.toInt().toString() else billToEdit.amount.toString()
+            inputAmount.setText(formattedAmount)
+
+            val categoryPosition=categories.indexOf(billToEdit.category)
+            if(categoryPosition>=0){
+                spinerCategory.setSelection(categoryPosition)
+            }
+
+            selectedDueDate=billToEdit.dueDate
+
+            val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            tvSelectDate.text = sdf.format(java.util.Date(selectedDueDate))
+
+            btnSave.text="Update"
+        }
+        else{
+            selectedDueDate=0L
+            btnSave.setText("Save")
+        }
+
         btnSave.setOnClickListener {
             val nameText=inputName.text.toString().trim()
             val amountText=inputAmount.text.toString().trim()
@@ -169,15 +202,27 @@ class Reminder : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val newBill= ScheduledBill(
-                billName = nameText,
-                amount = amountText.toDouble(),
-                category = categoryValue,
-                dueDate = selectedDueDate
-            )
+            if(billToEdit==null){
+                val newBill= ScheduledBill(
+                    billName = nameText,
+                    amount = amountText.toDouble(),
+                    category = categoryValue,
+                    dueDate = selectedDueDate
+                )
 
-            viewModel.insertScheduleBills(newBill)
-            android.widget.Toast.makeText(this,"Payment Scheduled.", Toast.LENGTH_SHORT).show()
+                viewModel.insertScheduleBills(newBill)
+                android.widget.Toast.makeText(this,"Payment Scheduled.", Toast.LENGTH_SHORT).show()
+            }
+            else{
+                val updatedBill=billToEdit.copy(
+                    billName = nameText,
+                    amount = amountText.toDouble(),
+                    category = categoryValue,
+                    dueDate = selectedDueDate
+                )
+                viewModel.updateScheduledBill(updatedBill)
+                android.widget.Toast.makeText(this,"Bill Updated.", android.widget.Toast.LENGTH_SHORT).show()
+            }
 
             bottomSheetDialog.dismiss()
         }
