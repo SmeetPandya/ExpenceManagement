@@ -35,7 +35,7 @@ class Analytics : AppCompatActivity() {
         setContentView(R.layout.activity_analytics)
 
         val database = ExpenseDatabase.getDatabase(this)
-        val repository = ExpenseRepository(database.expenseDao())
+        val repository = ExpenseRepository(database.expenseDao(),database.ScheduledBillDao())
         val factory = ExpenseViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory).get(ExpenseViewModel::class.java)
 
@@ -74,6 +74,11 @@ class Analytics : AppCompatActivity() {
                 R.id.nav_settings -> {
                     val intent = Intent(this, Settings::class.java)
                     startActivity(intent)
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_reminders -> {
+                    startActivity(android.content.Intent(applicationContext, Reminder::class.java))
                     overridePendingTransition(0, 0)
                     true
                 }

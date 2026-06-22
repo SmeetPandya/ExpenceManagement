@@ -5,11 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Expence::class], version = 1)
+@Database(entities = [Expence::class , ScheduledBill::class], version = 2)
 abstract class ExpenseDatabase: RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
 
-
+    abstract fun ScheduledBillDao(): ScheduledBillDao
 
     companion object{
 
@@ -27,7 +27,9 @@ abstract class ExpenseDatabase: RoomDatabase() {
                     context.applicationContext,
                     ExpenseDatabase::class.java,
                     "expense_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
 
                 INSTANCE = instance
                 return instance

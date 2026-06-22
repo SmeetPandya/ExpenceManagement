@@ -26,7 +26,7 @@ class Settings : AppCompatActivity() {
         val auth= FirebaseAuth.getInstance()
 
         val database = com.smeet.expencemanagement.model.ExpenseDatabase.getDatabase(this)
-        val repository = com.smeet.expencemanagement.repository.ExpenseRepository(database.expenseDao())
+        val repository = com.smeet.expencemanagement.repository.ExpenseRepository(database.expenseDao(),database.ScheduledBillDao())
         val factory = com.smeet.expencemanagement.viewmodel.ExpenseViewModelFactory(repository)
         val viewModel = androidx.lifecycle.ViewModelProvider(this, factory).get(com.smeet.expencemanagement.viewmodel.ExpenseViewModel::class.java)
 
@@ -109,6 +109,11 @@ class Settings : AppCompatActivity() {
                     startActivity(android.content.Intent(applicationContext, Analytics::class.java))
 
                     // THE MAGIC TRICK: This kills the slide animation so it looks seamless
+                    overridePendingTransition(0, 0)
+                    true
+                }
+                R.id.nav_reminders -> {
+                    startActivity(android.content.Intent(applicationContext, Reminder::class.java))
                     overridePendingTransition(0, 0)
                     true
                 }

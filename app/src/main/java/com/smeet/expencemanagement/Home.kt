@@ -53,7 +53,7 @@ class Home : AppCompatActivity() {
 
         // Initialize Room database, repository, and ViewModel
         val database = com.smeet.expencemanagement.model.ExpenseDatabase.getDatabase(this)
-        val repository = com.smeet.expencemanagement.repository.ExpenseRepository(database.expenseDao())
+        val repository = com.smeet.expencemanagement.repository.ExpenseRepository(database.expenseDao(),database.ScheduledBillDao())
         val factory = com.smeet.expencemanagement.viewmodel.ExpenseViewModelFactory(repository)
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory).get(com.smeet.expencemanagement.viewmodel.ExpenseViewModel::class.java)
 
@@ -76,6 +76,11 @@ class Home : AppCompatActivity() {
                     val intent= Intent(this, Analytics::class.java)
                     startActivity(intent)
                     overridePendingTransition(0,0)
+                    true
+                }
+                R.id.nav_reminders -> {
+                    startActivity(android.content.Intent(applicationContext, Reminder::class.java))
+                    overridePendingTransition(0, 0)
                     true
                 }
                 else -> false
