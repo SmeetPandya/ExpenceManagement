@@ -86,7 +86,7 @@
                 android:id="@+id/tvRemainingTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Remaining to Pay"
+                android:text="Total to Pay (Including Overdue)"
                 android:textColor="@color/brand_primary"
                 android:textSize="14sp"
                 android:layout_marginTop="16dp"

@@ -24,7 +24,7 @@ import com.smeet.expencemanagement.viewmodel.ExpenseViewModelFactory
 class Analytics : AppCompatActivity() {
 
     private lateinit var viewModel: ExpenseViewModel
-    private var selectedStartDate: Long = 0L
+    private var selectedStartDate: Long = System.currentTimeMillis() - 604800000L
     private var selectedEndDate: Long = System.currentTimeMillis()
     private var myExpenses: List<com.smeet.expencemanagement.model.Expence> = emptyList()
 
@@ -316,25 +316,44 @@ class Analytics : AppCompatActivity() {
         axisLeft.typeface = cleanFont
 
         axisLeft.removeAllLimitLines()
-        val limitLine = com.github.mikephil.charting.components.LimitLine(dailyBudgetLimit, "Daily Limit (₹${dailyBudgetLimit.toInt()})")
+
+        val limitLine=com.github.mikephil.charting.components.LimitLine(dailyBudgetLimit, "")
         limitLine.lineWidth = 2f
         limitLine.enableDashedLine(15f, 10f, 0f)
-        limitLine.labelPosition = com.github.mikephil.charting.components.LimitLine.LimitLabelPosition.RIGHT_TOP
-        limitLine.textSize = 10f
-        limitLine.textColor = textColor
         limitLine.lineColor = overBudgetColor
         axisLeft.addLimitLine(limitLine)
+        // 3. Add 20% extra empty space to the top of the chart for breathing room
+        axisLeft.spaceTop = 20f
 
         axisLeft.valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
             override fun getAxisLabel(value: Float, axis: com.github.mikephil.charting.components.AxisBase?): String {
-                return if (value % 1 == 0f) "₹${value.toInt()}" else "₹$value"
+                return if (value % 1 == 0f) "₹${value.toInt()}" else "$saveCurrency$value"
             }
         }
 
         barChart.axisRight.isEnabled = false
         barChart.description.isEnabled = false
         barChart.setDrawBorders(false)
-        barChart.legend.isEnabled = false // Completely disables the Legend
+
+        val legend=barChart.legend
+        legend.isEnabled=true
+
+        val limitEntry = com.github.mikephil.charting.components.LegendEntry()
+        limitEntry.label = "Daily Limit (₹${dailyBudgetLimit.toInt()})"
+        limitEntry.formColor = overBudgetColor
+        limitEntry.form = com.github.mikephil.charting.components.Legend.LegendForm.LINE
+        limitEntry.formLineWidth = 2f
+        limitEntry.formLineDashEffect = android.graphics.DashPathEffect(floatArrayOf(15f, 10f), 0f)
+
+        legend.setCustom(listOf(limitEntry))
+
+        legend.textColor = textColor
+        legend.horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
+        legend.verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.BOTTOM
+        legend.orientation = com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL
+        legend.setDrawInside(false)
+
+        barChart.setExtraOffsets(0f, 0f, 0f, 10f)
 
         barChart.animateY(1000)
         barChart.invalidate()

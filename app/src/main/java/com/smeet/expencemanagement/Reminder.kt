@@ -1,5 +1,6 @@
 package com.smeet.expencemanagement
 
+import android.icu.util.Calendar
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -62,8 +63,27 @@ class Reminder : AppCompatActivity() {
                 showAddBillBottomSheet(billToEdit)
             },
             onDeleteClick = { billToDelete ->
+
+                val deleteBackup=billToDelete.copy()
                 viewModel.deleteScheduleBills(billToDelete)
-                android.widget.Toast.makeText(this, "Bill deleted", android.widget.Toast.LENGTH_SHORT).show()
+
+                com.google.android.material.snackbar.Snackbar.make(
+                    recyclerView,
+                    "Bill Deleted",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).apply {
+                    setAnchorView(findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense))
+
+                    setBackgroundTint(androidx.core.content.ContextCompat.getColor(this@Reminder, R.color.bg_card))
+                    setTextColor(androidx.core.content.ContextCompat.getColor(this@Reminder, R.color.text_primary))
+                    setActionTextColor(androidx.core.content.ContextCompat.getColor(this@Reminder, R.color.brand_primary))
+
+                    setAction("Undo"){
+                        viewModel.insertScheduleBills(deleteBackup)
+                        Toast.makeText(this@Reminder,"Bill Restored", Toast.LENGTH_SHORT).show()
+                    }
+                    show()
+                }
             }
         )
 
@@ -72,12 +92,38 @@ class Reminder : AppCompatActivity() {
         val emptyState=findViewById<android.widget.TextView>(R.id.emptyStateBills)
         val tvTotalBillAmount=findViewById<android.widget.TextView>(R.id.tvTotalBillsAmount)
         val tvRemainingAmount=findViewById<android.widget.TextView>(R.id.tvRemainingAmount)
+        val Title=findViewById<TextView>(R.id.listTitle)
+
+        val calender= java.util.Calendar.getInstance()
+
+        val monthYearFormater=java.text.SimpleDateFormat("MMM yyyy",java.util.Locale.getDefault())
+        val formattedMonthYear=monthYearFormater.format(calender.time)
+
+        Title.text="Bills & Overdue for $formattedMonthYear"
 
         viewModel.allScheduledBill.asLiveData().observe(this){billList->
 
-            adapter.updateData(billList)
+            val currentCalender=java.util.Calendar.getInstance()
+            val currentMonth=currentCalender.get(java.util.Calendar.MONTH)
+            val currentYear=currentCalender.get(java.util.Calendar.YEAR)
 
-            if(billList.isEmpty()){
+            val visibleBill = billList.filter { bill ->
+                val billCalendar = java.util.Calendar.getInstance()
+                billCalendar.timeInMillis = bill.dueDate
+
+                val billMonth = billCalendar.get(java.util.Calendar.MONTH)
+                val billYear = billCalendar.get(java.util.Calendar.YEAR)
+
+                val isPast = (billYear < currentYear) || (billYear == currentYear && billMonth < currentMonth)
+                val isCurrent = (billYear == currentYear) && (billMonth == currentMonth)
+
+                isCurrent || (isPast && !bill.isPaid)
+            }
+
+            adapter.updateData(visibleBill)
+
+
+            if(visibleBill.isEmpty()){
                 emptyState.visibility=android.view.View.VISIBLE
                 recyclerView.visibility=android.view.View.GONE
             }
@@ -86,8 +132,16 @@ class Reminder : AppCompatActivity() {
                 recyclerView.visibility=android.view.View.VISIBLE
             }
 
-            val totalScheduled = billList.sumOf { it.amount }
-            val totalRemaining = billList.filter { !it.isPaid }.sumOf { it.amount }
+            val totalScheduled = visibleBill.filter { bill->
+                val bc = java.util.Calendar.getInstance()
+                bc.timeInMillis = bill.dueDate
+                val bcMonth = bc.get(java.util.Calendar.MONTH)
+                val bcYear = bc.get(java.util.Calendar.YEAR)
+
+                (bcYear == currentYear) && (bcMonth == currentMonth)
+            }.sumOf { it.amount }
+
+            val totalRemaining = visibleBill.filter { !it.isPaid }.sumOf { it.amount }
 
             val formattedTotal = if (totalScheduled % 1 == 0.0) totalScheduled.toInt().toString() else totalScheduled.toString()
             val formattedRemaining = if (totalRemaining % 1 == 0.0) totalRemaining.toInt().toString() else totalRemaining.toString()
@@ -142,8 +196,13 @@ class Reminder : AppCompatActivity() {
         val tvSelectDate=view.findViewById<TextView>(R.id.tvSelectedDueDate)
 
         btnPickDate.setOnClickListener {
+
+            val constraintBuilder=com.google.android.material.datepicker.CalendarConstraints.Builder()
+                .setValidator(com.google.android.material.datepicker.DateValidatorPointForward.now())
+
             val dataPicker= MaterialDatePicker.Builder.datePicker()
                 .setTitleText("Select Due Date")
+                .setCalendarConstraints(constraintBuilder.build())
                 .build()
 
             dataPicker.show(supportFragmentManager,"DATE_PICKER")
@@ -154,7 +213,6 @@ class Reminder : AppCompatActivity() {
                 val sdf=java.text.SimpleDateFormat("dd MMM yyyy",java.util.Locale.getDefault())
                 tvSelectDate.text=sdf.format(java.util.Date(selection))
             }
-
         }
 
         val inputName=view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.inputScheduledName)

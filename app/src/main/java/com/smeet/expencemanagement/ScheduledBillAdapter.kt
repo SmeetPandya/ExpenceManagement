@@ -55,13 +55,20 @@ class ScheduledBillAdapter(
         val diffInMillis=calDue.timeInMillis-calCurrent.timeInMillis
         val daysDifference = TimeUnit.MILLISECONDS.toDays(diffInMillis)
 
-        when {
-            daysDifference < 0 -> holder.statusBadge.text = "Overdue"
-            daysDifference == 0L -> holder.statusBadge.text = "Due Today"
-            daysDifference == 1L -> holder.statusBadge.text = "Due Tomorrow"
-            else -> {
-                val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
-                holder.statusBadge.text = "Due ${sdf.format(Date(currentBill.dueDate))}"
+
+        if(currentBill.isPaid){
+            val sdf= SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            holder.statusBadge.text="Paid for ${sdf.format(Date(currentBill.dueDate))}"
+        }
+        else {
+            when {
+                daysDifference < 0 -> holder.statusBadge.text = "Overdue"
+                daysDifference == 0L -> holder.statusBadge.text = "Due Today"
+                daysDifference == 1L -> holder.statusBadge.text = "Due Tomorrow"
+                else -> {
+                    val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
+                    holder.statusBadge.text = "Due ${sdf.format(Date(currentBill.dueDate))}"
+                }
             }
         }
 
@@ -79,33 +86,56 @@ class ScheduledBillAdapter(
             }
         }
 
-        holder.iconMoreOptions.setOnClickListener { view ->
-            val popup=android.widget.PopupMenu(view.context,holder.iconMoreOptions)
+        if(currentBill.isPaid){
+            holder.iconMoreOptions.visibility=android.view.View.INVISIBLE
+        }
+        else {
 
-            popup.menu.add("Edit")
-            popup.menu.add("Delete")
+            holder.iconMoreOptions.visibility = android.view.View.VISIBLE
 
-            popup.setOnMenuItemClickListener { menuItem ->
-                when(menuItem.title){
-                    "Edit"->{
-                        onEditClick(currentBill)
-                        true
+            holder.iconMoreOptions.setOnClickListener { view ->
+                val popup = android.widget.PopupMenu(view.context, holder.iconMoreOptions)
+
+                popup.menu.add("Edit")
+                popup.menu.add("Delete")
+
+                popup.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.title) {
+                        "Edit" -> {
+                            onEditClick(currentBill)
+                            true
+                        }
+
+                        "Delete" -> {
+                            onDeleteClick(currentBill)
+                            true
+                        }
+
+                        else -> false
                     }
-                    "Delete"->{
-                        onDeleteClick(currentBill)
-                        true
-                    }
-                    else -> false
                 }
+                popup.show()
             }
-            popup.show()
         }
     }
 
     override fun getItemCount(): Int =billList.size
 
     fun updateData(newList: List<ScheduledBill>){
-        billList=newList.toMutableList()
+
+        val currentCalendar = Calendar.getInstance()
+        val currentMonth = currentCalendar.get(Calendar.MONTH)
+        val currentYear = currentCalendar.get(Calendar.YEAR)
+
+        val filteredList=newList.filter { bill ->
+            val billCalender= Calendar.getInstance().apply { timeInMillis=bill.dueDate }
+            val billMonth = billCalender.get(Calendar.MONTH)
+            val billYear = billCalender.get(Calendar.YEAR)
+
+            (billYear < currentYear) || (billYear == currentYear && billMonth <= currentMonth)
+        }
+
+        billList=filteredList.toMutableList()
         notifyDataSetChanged()
     }
 

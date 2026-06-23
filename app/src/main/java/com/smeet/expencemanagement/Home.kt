@@ -58,6 +58,22 @@ class Home : AppCompatActivity() {
         viewModel = androidx.lifecycle.ViewModelProvider(this, factory).get(com.smeet.expencemanagement.viewmodel.ExpenseViewModel::class.java)
 
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
+        val workRequest=androidx.work.PeriodicWorkRequestBuilder<BillReminderWorker>(
+            1,java.util.concurrent.TimeUnit.DAYS
+        ).build()
+
+        androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "DailyBillReminder",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP, // KEEP prevents resetting the timer if they open the app
+            workRequest
+        )
+
         val bottomnavigationView1=findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
 
         bottomnavigationView1.selectedItemId=R.id.nav_home
@@ -121,7 +137,7 @@ class Home : AppCompatActivity() {
             // 2. Calculate perfect padding (Converts 24dp to exact screen pixels)
             val paddingPx = (24 * resources.displayMetrics.density).toInt()
 
-            // 3. Create a Container to act as a bumper (fixes the "touching edges" issue)
+            // 3. Create a Container to act as a bumper
             val container = android.widget.FrameLayout(this)
             container.setPadding(paddingPx, paddingPx / 2, paddingPx, 0)
 
@@ -173,9 +189,25 @@ class Home : AppCompatActivity() {
         // Initialize adapter and handle inline Edit/Delete actions triggered from the UI
         adapter = ExpenseAdapter(mutableListOf<Expence>(), savedCurrency) { expence, action ->
             if (action == "DELETE") {
-                // Remove the selected expense from the database
+                val deletedExpenceBackup=expence.copy()
                 viewModel.delete(expence)
-                Toast.makeText(this, "Expense Deleted", Toast.LENGTH_SHORT).show()
+                com.google.android.material.snackbar.Snackbar.make(
+                    recyclerView,
+                    "Expense Deleted",
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).apply {
+                    setAnchorView(findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense))
+
+                    setBackgroundTint(androidx.core.content.ContextCompat.getColor(this@Home, R.color.bg_card))
+                    setTextColor(androidx.core.content.ContextCompat.getColor(this@Home, R.color.text_primary))
+                    setActionTextColor(androidx.core.content.ContextCompat.getColor(this@Home, R.color.brand_primary))
+
+                    setAction("Undo"){
+                        viewModel.insert(deletedExpenceBackup)
+                        Toast.makeText(this@Home, "Expense restored", Toast.LENGTH_SHORT).show()
+                    }
+                    show()
+                }
             } else if (action == "EDIT") {
                 // Open the bottom sheet to edit an existing expense
                 val bottomsheetDialog = BottomSheetDialog(this)
@@ -208,10 +240,11 @@ class Home : AppCompatActivity() {
                         Toast.makeText(this, "Please fill both fields to update", Toast.LENGTH_SHORT).show()
                     } else {
                         // Package the modified values and update the database record
-                        val amountDouble = amountText.toDouble()
 
+                        val amountDouble=amountText.toDouble()
                         val currentBudget=sharedPreference.getInt("dailyBudget",500)
-                        val projectTotal=TotalAmount+amountDouble
+
+                        val projectTotal=(TotalAmount-expence.amount)+amountDouble
 
                         if(projectTotal>currentBudget){
                             MaterialAlertDialogBuilder(this)
@@ -252,9 +285,15 @@ class Home : AppCompatActivity() {
         val filterButton=findViewById<ImageView>(R.id.btnFilterDate)
 
         filterButton.setOnClickListener {
+
+            val constraintsBuilder = com.google.android.material.datepicker.CalendarConstraints.Builder()
+                .setValidator(com.google.android.material.datepicker.DateValidatorPointBackward.now())
+
             val builder = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
             builder.setTitleText("Select a Day")
             builder.setSelection(currentlyViewingDate)
+
+            builder.setCalendarConstraints(constraintsBuilder.build())
 
             val picker = builder.build()
 
@@ -364,15 +403,20 @@ class Home : AppCompatActivity() {
 
         val recentTitle = findViewById<TextView>(R.id.recentTitle)
 
+        val fabAddExpense = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense)
+
         // 2. SMART TITLE LOGIC: Check if the currently viewed date is actually "Today"
         if (android.text.format.DateUtils.isToday(currentlyViewingDate)) {
             // If it is today, show the normal title
             recentTitle.text = "Today's Expenses"
+            fabAddExpense.visibility=android.view.View.VISIBLE
         } else {
             // If it is NOT today, format the date (e.g., "18 Jun 2026") and show that!
             val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
             val formattedDate = sdf.format(java.util.Date(currentlyViewingDate))
             recentTitle.text = "Expenses on $formattedDate"
+
+            fabAddExpense.visibility=android.view.View.GONE
         }
 
         if(todaysExpenses.isEmpty()){
@@ -463,9 +507,6 @@ class Home : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // The '?' safely ignores this if the view is missing, preventing crashes!
         findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)?.selectedItemId = R.id.nav_home
-
-        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddExpense)?.show()
     }
 }

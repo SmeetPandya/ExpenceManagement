@@ -21,4 +21,7 @@ interface ScheduledBillDao {
 
     @Query("SELECT * FROM scheduled_bills_table ORDER BY dueDate ASC")
     fun getAllScheduledBills(): Flow<List<ScheduledBill>>
+
+    @Query("SELECT * FROM scheduled_bills_table")
+    suspend fun getAllBillSync() : List<ScheduledBill>
 }
