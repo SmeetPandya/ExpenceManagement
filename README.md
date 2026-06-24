@@ -53,4 +53,4 @@
 
 1. Clone this repository:
    ```bash
-   git clone [https://github.com/SmeetPandya/ExpenceManagement.git](https://github.com/SmeetPandya/ExpenceManagement.git)
+   git clone https://github.com/SmeetPandya/ExpenceManagement.git
