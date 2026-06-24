@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.dialog.MaterialDialogs
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.smeet.expencemanagement.model.Expence
 import com.smeet.expencemanagement.viewmodel.ExpenseViewModel
@@ -456,13 +457,13 @@ class Home : AppCompatActivity() {
 
     // Show a configuration dialog for first-time users to set currency and budget limits
     private fun showConfigurationPopup(sharedPref: SharedPreferences) {
-        val input = EditText(this)
-        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-        input.hint = "e.g., 500"
+
+        val paddingPx = (24 * resources.displayMetrics.density).toInt()
+        val spacingPx = (16 * resources.displayMetrics.density).toInt()
 
         val container = android.widget.LinearLayout(this)
         container.orientation = android.widget.LinearLayout.VERTICAL
-        container.setPadding(50, 40, 50, 0)
+        container.setPadding(paddingPx, paddingPx / 2, paddingPx, 0)
 
         val spinner = android.widget.Spinner(this)
         val currencies = arrayOf(
@@ -478,31 +479,54 @@ class Home : AppCompatActivity() {
         val spinnerAdapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, currencies)
         spinner.adapter = spinnerAdapter
 
-        container.addView(spinner)
-        container.addView(input)
+        val spinnerParams = android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+        )
 
-        MaterialAlertDialogBuilder(this)
+        spinnerParams.setMargins(0, 0, 0, spacingPx)
+        spinner.layoutParams = spinnerParams
+
+        val textInputLayout=com.google.android.material.textfield.TextInputLayout(
+            this,null,com.google.android.material.R.attr.textInputOutlinedStyle
+        )
+
+        val input = com.google.android.material.textfield.TextInputEditText(textInputLayout.context)
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        input.setText("500")
+
+        textInputLayout.addView(input)
+        container.addView(spinner)
+        container.addView(textInputLayout)
+
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Welcome!")
             .setMessage("Set your currency and daily budget:")
             .setView(container)
             .setCancelable(false)
-            .setPositiveButton("Save Budget") { dialog, _ ->
-                val typeText = input.text.toString()
-                val finalBudget = if (typeText.isNotEmpty()) typeText.toInt() else 500
+            .setPositiveButton("Save Budget", null) // Pass null first so the dialog doesn't auto-close on error
+            .create()
 
-                val selectedOption = spinner.selectedItem.toString()
-                val selectedCurrency = selectedOption.split(" ")[0]
+        dialog.show()
 
-                // Save user selections locally so the prompt doesn't show again
-                sharedPref.edit()
-                    .putBoolean("isFirstTime", false)
-                    .putInt("dailyBudget", finalBudget)
-                    .putString("currencySymbole", selectedCurrency)
-                    .apply()
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(getColor(R.color.brand_primary))
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+            val typeText = input.text.toString()
+            val finalBudget = if (typeText.isNotEmpty()) typeText.toInt() else 500
 
-                totalbudget.text = "/ $selectedCurrency$finalBudget"
-            }
-            .show()
+            val selectedOption = spinner.selectedItem.toString()
+            val selectedCurrency = selectedOption.split(" ")[0]
+
+            // Save user selections locally
+            sharedPref.edit()
+                .putBoolean("isFirstTime", false)
+                .putInt("dailyBudget", finalBudget)
+                .putString("currencySymbole", selectedCurrency)
+                .apply()
+
+            totalbudget.text = "/ $selectedCurrency$finalBudget"
+            dialog.dismiss()
+        }
     }
 
     override fun onResume() {

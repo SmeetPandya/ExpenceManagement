@@ -85,6 +85,9 @@ class Register : AppCompatActivity() {
                 Toast.makeText(this,"Password must be at least 6 characters.", Toast.LENGTH_SHORT).show()
             }
 
+            registerButton.isEnabled=false
+            registerButton.setText("Creating Account")
+
             auth.createUserWithEmailAndPassword(email,password).addOnCompleteListener (this){ task ->
 
                 if(task.isSuccessful){
@@ -102,6 +105,8 @@ class Register : AppCompatActivity() {
                     }
                 }
                 else{
+                    registerButton.isEnabled = true
+                    registerButton.text = "Register"
                     Toast.makeText(this,"Registration Failed:${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }

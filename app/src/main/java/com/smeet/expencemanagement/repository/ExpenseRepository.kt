@@ -44,4 +44,8 @@ class ExpenseRepository(
     suspend fun updateScheduledBill(bill: ScheduledBill) {
         scheduledBillDao.update(bill)
     }
+
+    suspend fun deleteAllScheduledBills() {
+        scheduledBillDao.deleteAllScheduledBills()
+    }
 }

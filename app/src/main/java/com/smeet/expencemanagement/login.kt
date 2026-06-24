@@ -77,6 +77,9 @@ class login : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            loginbutton.isEnabled=false
+            loginbutton.setText("Logging in...")
+
             auth.signInWithEmailAndPassword(email,password).addOnCompleteListener (this){ task ->
                 if(task.isSuccessful){
                     Toast.makeText(this,"Login Successfully!", Toast.LENGTH_SHORT).show()
@@ -87,6 +90,8 @@ class login : AppCompatActivity() {
                     finish()
                 }
                 else{
+                    loginbutton.isEnabled = true
+                    loginbutton.text = "Login"
                     Toast.makeText(this,"Login Failed:${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }

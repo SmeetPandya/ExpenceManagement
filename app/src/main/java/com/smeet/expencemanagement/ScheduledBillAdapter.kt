@@ -57,8 +57,10 @@ class ScheduledBillAdapter(
 
 
         if(currentBill.isPaid){
-            val sdf= SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-            holder.statusBadge.text="Paid for ${sdf.format(Date(currentBill.dueDate))}"
+            // Keep it simple and professional. No confusing dates.
+            val dateToFormat = currentBill.exactDatePaid ?: currentBill.dueDate
+            val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            holder.statusBadge.text = "Paid on ${sdf.format(Date(dateToFormat))}"
         }
         else {
             when {
@@ -74,7 +76,7 @@ class ScheduledBillAdapter(
 
         if (currentBill.isPaid) {
             holder.btnMarkPaid.text = "Paid"
-            holder.btnMarkPaid.isEnabled = false
+            holder.btnMarkPaid.isEnabled=false
         } else {
             holder.btnMarkPaid.text = "Pay"
             holder.btnMarkPaid.isEnabled = true
@@ -135,7 +137,12 @@ class ScheduledBillAdapter(
             (billYear < currentYear) || (billYear == currentYear && billMonth <= currentMonth)
         }
 
-        billList=filteredList.toMutableList()
+        val sortedList=filteredList.sortedWith (
+            compareBy <ScheduledBill>{ it.isPaid }
+                .thenBy{ it.dueDate }
+        )
+
+        billList=sortedList.toMutableList()
         notifyDataSetChanged()
     }
 

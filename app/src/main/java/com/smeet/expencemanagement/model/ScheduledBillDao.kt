@@ -24,4 +24,7 @@ interface ScheduledBillDao {
 
     @Query("SELECT * FROM scheduled_bills_table")
     suspend fun getAllBillSync() : List<ScheduledBill>
+
+    @Query("DELETE FROM scheduled_bills_table") // Make sure this matches your actual table name
+    suspend fun deleteAllScheduledBills()
 }

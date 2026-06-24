@@ -106,6 +106,11 @@ class Analytics : AppCompatActivity() {
             builder.setTitleText("Select Dates")
             builder.setTheme(com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialCalendar)
 
+            val constraintBuilder = com.google.android.material.datepicker.CalendarConstraints.Builder()
+                .setValidator(com.google.android.material.datepicker.DateValidatorPointBackward.now())
+
+            builder.setCalendarConstraints(constraintBuilder.build())
+
             val picker = builder.build()
 
             picker.addOnPositiveButtonClickListener { selection ->

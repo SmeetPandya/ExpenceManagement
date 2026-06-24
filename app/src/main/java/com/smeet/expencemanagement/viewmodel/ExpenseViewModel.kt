@@ -53,4 +53,8 @@ class ExpenseViewModel(private val repository: ExpenseRepository): ViewModel() {
             repository.updateScheduledBill(bill)
         }
     }
+
+    fun deleteAllScheduledBills() = viewModelScope.launch {
+        repository.deleteAllScheduledBills()
+    }
 }

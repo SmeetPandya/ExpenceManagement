@@ -46,15 +46,17 @@ class Reminder : AppCompatActivity() {
             billList = mutableListOf(),
             currencySymbol = currencySymbol,
             onMarkAsPaid = { paidBill ->
+                val today= System.currentTimeMillis()
+
                 val newExpense = com.smeet.expencemanagement.model.Expence(
                     amount = paidBill.amount,
                     category = paidBill.category,
                     note = paidBill.billName + " (Scheduled)",
-                    date = System.currentTimeMillis()
+                    date = today
                 )
                 viewModel.insert(newExpense)
 
-                val updatedBill = paidBill.copy(isPaid = true)
+                val updatedBill = paidBill.copy(isPaid = true, exactDatePaid = today)
                 viewModel.updateScheduledBill(updatedBill)
 
                 android.widget.Toast.makeText(this, "${paidBill.billName} marked as paid!", android.widget.Toast.LENGTH_SHORT).show()

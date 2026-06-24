@@ -59,6 +59,7 @@ class Settings : AppCompatActivity() {
                 }
                 .setPositiveButton("Yes,Delete Everything"){ dialog,_->
                     viewModel.deleteAllExpence()
+                    viewModel.deleteAllScheduledBills()
 
                     android.widget.Toast.makeText(this,"All data wiped successfully.",android.widget.Toast.LENGTH_SHORT).show()
                 }

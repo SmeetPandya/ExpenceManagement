@@ -11,5 +11,6 @@ data class ScheduledBill(
     val amount: Double,
     val category: String,
     val dueDate: Long,
-    val isPaid: Boolean=false
+    val isPaid: Boolean=false,
+    val exactDatePaid: Long ?=null
 )
